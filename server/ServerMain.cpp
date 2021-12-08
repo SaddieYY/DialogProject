@@ -58,7 +58,7 @@ int main(void)
 	if (!hEventCreateClient) {
 		return GetLastError();
 	}
-	hEventCreatedClient = CreateEventA(NULL, false, false, "$MyEventCreated$");
+	hEventCreatedClient = CreateEventA(NULL, false, false, "$MyEventCreatedUser$");
 	if (!hEventCreatedClient) {
 		return GetLastError();
 	}
@@ -134,8 +134,8 @@ int main(void)
 			}
 		}
 	}
-	CloseHandle(hEventTerminateA);
 	CloseHandle(hEventServer);
+	CloseHandle(hEventTerminateA);
 	CloseHandle(hEventCreateClient);
 	CloseHandle(hEventCreatedClient);
 	return 0;

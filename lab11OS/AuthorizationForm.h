@@ -223,16 +223,18 @@ namespace lab11OS {
 			textBoxName->Text = "";
 			return;
 		}
+		AuthorizationForm_Load(sender, e);
 		const char* buf = temp.c_str();
 		WriteFile(hCreateMail, buf, strlen(buf) + 1, NULL, NULL);
 		SetEvent(hEventCreateClient);
 		WaitForSingleObject(hEventCreatedClient, INFINITE);
 		textBoxName->Text = "";
+		errorName = false;
 	}
 	private: System::Void AuthorizationForm_Load(System::Object^ sender, System::EventArgs^ e) {
 		 
 		HANDLE serverCreate = OpenEventA(EVENT_ALL_ACCESS, true, "$MyEventCreateServer$");
-		if (!serverCreate) {
+		if (!serverCreate || serverCreate == INVALID_HANDLE_VALUE) {
 			PROCESS_INFORMATION* pi = new PROCESS_INFORMATION;
 			STARTUPINFOA *si = new STARTUPINFOA;
 			ZeroMemory(si, sizeof(*si));
@@ -240,16 +242,16 @@ namespace lab11OS {
 			ZeroMemory(pi, sizeof(*pi));
 			CreateProcessA(NULL, "server.exe ", NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, si, pi);
 			serverCreate = OpenEventA(EVENT_ALL_ACCESS, false, "$MyEventCreateServer$");
-			while(!serverCreate) serverCreate = OpenEventA(EVENT_ALL_ACCESS, false, "$MyEventCreateServer$");
+			while(!serverCreate || serverCreate == INVALID_HANDLE_VALUE) serverCreate = OpenEventA(EVENT_ALL_ACCESS, false, "$MyEventCreateServer$");
 		}
 		 DWORD dwCode = WaitForSingleObject(serverCreate, INFINITE);
 		 if (dwCode == WAIT_OBJECT_0) {
 			 hEventCreateClient = OpenEventA(EVENT_ALL_ACCESS, false, "$MyEventCreateUser$");
-			 hEventCreatedClient = OpenEventA(EVENT_ALL_ACCESS, false, "$MyEventCreated$");
+			 hEventCreatedClient = OpenEventA(EVENT_ALL_ACCESS, false, "$MyEventCreatedUser$");
 			 hEventTermination = OpenEventA(EVENT_ALL_ACCESS, false, "$MyEventTerminated$");
 			 hCreateMail = CreateFileA("\\\\.\\mailslot\\$createmail$", GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-			 
 		 }
+		 CloseHandle(serverCreate);
 	}
 	private: bool errorName;
 	private: System::Void textBoxName_Validating(System::Object^ sender, System::ComponentModel::CancelEventArgs^ e) {//перевірка на правильність імені
