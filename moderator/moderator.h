@@ -6,7 +6,8 @@
 using namespace std;
 int Number = 0;
 HANDLE mymutex;
-void StringSearch(string WordsArr, string WordToFind)
+#define PUTH_F "C:\\Users\\Saddie\\source\\repos\\lab11OS\\files\\"
+void StringSearch(string WordsArr, string WordToFind) //функція пошуку підстрічки
 {
     int j;
 
@@ -29,14 +30,14 @@ void StringSearch(string WordsArr, string WordToFind)
     }
 }
 
-typedef struct ModData
+typedef struct ModData //структура для функції-потоку
 {
 	string message;
 	string forbword;
 };
 
 
-DWORD WINAPI Moderator(LPVOID lpParam)
+DWORD WINAPI Moderator(LPVOID lpParam) //функція-потік
 {
 	ModData* prmts = (ModData*)lpParam;
 
@@ -49,7 +50,7 @@ DWORD WINAPI Moderator(LPVOID lpParam)
 class cModerator
 {
 public:
-	static bool Moderate(string mes) {
+	static bool Moderate(string mes) { //статичний метод для перевірки на входження заборонених слів 
         Number = 0;
         vector<string> forbwords = { "forbiden", "kaka", "poop" };
 
@@ -66,9 +67,8 @@ public:
             tmp[i].forbword = forbwords[i];
             arrth[i] = CreateThread(NULL, 0, Moderator, &tmp[i], 0, (LPDWORD)&arrthid[i]);
         }
-
         WaitForMultipleObjects(forbwords.size(), arrth, TRUE, INFINITE);
-        string fileName = "C:\\Users\\Saddie\\source\\repos\\lab11OS\\files\\ErrorFile";
+        string fileName = (string)PUTH_F + "ErrorFile";
         ofstream in(fileName, ios::app);
         in << mes << " (" << Number << ")\n";
         in.close();

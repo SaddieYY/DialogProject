@@ -4,6 +4,7 @@
 #include <list>
 #include <fstream>
 #include <msclr\marshal_cppstd.h>
+#define PUTH_F "C:\\Users\\Saddie\\source\\repos\\lab11OS\\files\\"
 using namespace std;
 namespace lab11OS {
 
@@ -38,12 +39,18 @@ namespace lab11OS {
 			{
 				delete components;
 			}
+			SetEvent(hEventTermination);
+			CloseHandle(hEventCreateClient);
+			CloseHandle(hEventCreatedClient);
+			CloseHandle(hCreateMail);
 		}
 	private: System::Windows::Forms::TextBox^ textBoxName;
 	private: System::Windows::Forms::Button^ buttonAccept;
 	private: System::Windows::Forms::TableLayoutPanel^ tableLayoutPanel1;
 	private: System::Windows::Forms::TableLayoutPanel^ tableLayoutPanel2;
 	private: System::Windows::Forms::Label^ label1;
+	private: System::Windows::Forms::ErrorProvider^ errorProvider1;
+	private: System::ComponentModel::IContainer^ components;
 	protected:
 
 	protected:
@@ -52,7 +59,7 @@ namespace lab11OS {
 		/// <summary>
 		/// Required designer variable.
 		/// </summary>
-		System::ComponentModel::Container ^components;
+
 
 #pragma region Windows Form Designer generated code
 		/// <summary>
@@ -61,14 +68,17 @@ namespace lab11OS {
 		/// </summary>
 		void InitializeComponent(void)
 		{
+			this->components = (gcnew System::ComponentModel::Container());
 			System::ComponentModel::ComponentResourceManager^ resources = (gcnew System::ComponentModel::ComponentResourceManager(AuthorizationForm::typeid));
 			this->textBoxName = (gcnew System::Windows::Forms::TextBox());
 			this->buttonAccept = (gcnew System::Windows::Forms::Button());
 			this->tableLayoutPanel1 = (gcnew System::Windows::Forms::TableLayoutPanel());
 			this->tableLayoutPanel2 = (gcnew System::Windows::Forms::TableLayoutPanel());
 			this->label1 = (gcnew System::Windows::Forms::Label());
+			this->errorProvider1 = (gcnew System::Windows::Forms::ErrorProvider(this->components));
 			this->tableLayoutPanel1->SuspendLayout();
 			this->tableLayoutPanel2->SuspendLayout();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->errorProvider1))->BeginInit();
 			this->SuspendLayout();
 			// 
 			// textBoxName
@@ -78,6 +88,9 @@ namespace lab11OS {
 			this->textBoxName->Name = L"textBoxName";
 			this->textBoxName->Size = System::Drawing::Size(148, 20);
 			this->textBoxName->TabIndex = 0;
+			this->textBoxName->TextChanged += gcnew System::EventHandler(this, &AuthorizationForm::textBoxName_TextChanged);
+			this->textBoxName->Validating += gcnew System::ComponentModel::CancelEventHandler(this, &AuthorizationForm::textBoxName_Validating);
+			this->textBoxName->Validated += gcnew System::EventHandler(this, &AuthorizationForm::textBoxName_Validated);
 			// 
 			// buttonAccept
 			// 
@@ -135,12 +148,18 @@ namespace lab11OS {
 			this->label1->Text = L"Registration";
 			this->label1->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
 			// 
+			// errorProvider1
+			// 
+			this->errorProvider1->BlinkStyle = System::Windows::Forms::ErrorBlinkStyle::NeverBlink;
+			this->errorProvider1->ContainerControl = this;
+			// 
 			// AuthorizationForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->ClientSize = System::Drawing::Size(313, 208);
 			this->Controls->Add(this->tableLayoutPanel1);
+			this->FormBorderStyle = System::Windows::Forms::FormBorderStyle::FixedSingle;
 			this->Icon = (cli::safe_cast<System::Drawing::Icon^>(resources->GetObject(L"$this.Icon")));
 			this->MaximizeBox = false;
 			this->MinimizeBox = false;
@@ -153,6 +172,7 @@ namespace lab11OS {
 			this->tableLayoutPanel1->PerformLayout();
 			this->tableLayoutPanel2->ResumeLayout(false);
 			this->tableLayoutPanel2->PerformLayout();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->errorProvider1))->EndInit();
 			this->ResumeLayout(false);
 
 		}
@@ -160,8 +180,9 @@ namespace lab11OS {
 	private: HANDLE hCreateMail;
 	private: HANDLE hEventCreateClient;
 	private: HANDLE hEventCreatedClient;
+	private: HANDLE hEventTermination;
 	private: bool findUser(string userName) {
-		string fileName = "C:\\Users\\Saddie\\source\\repos\\lab11OS\\files\\UserList";
+		string fileName = (string)(PUTH_F) + "UserList";
 		std::fstream in(fileName);
 		if (!in.is_open()) {
 			return false;
@@ -183,15 +204,16 @@ namespace lab11OS {
 		in.close();
 		return false;
 	}
-	private: void writeUser(string userName) {
-		string fileName = "C:\\Users\\Saddie\\source\\repos\\lab11OS\\files\\UserList";
+	private: void writeUser(string userName) { //запис користувача в файл
+		string fileName = (string)(PUTH_F) + "UserList";
 		ofstream out(fileName, std::ofstream::ate | std::ofstream::app);
 		string curName;
 		int count = 0;
 		out.write((userName + '\n').data(), userName.size() + 1);
 		out.close();
 	}
-	private: System::Void buttonAccept_Click(System::Object^ sender, System::EventArgs^ e) {
+	private: System::Void buttonAccept_Click(System::Object^ sender, System::EventArgs^ e) {//метод додавання користувача
+		if (errorName) return;
 		string temp = msclr::interop::marshal_as<std::string>(textBoxName->Text);
 		if (!findUser(temp)) {
 			writeUser(temp);
@@ -216,7 +238,7 @@ namespace lab11OS {
 			ZeroMemory(si, sizeof(*si));
 			si->cb = sizeof(*si);
 			ZeroMemory(pi, sizeof(*pi));
-			CreateProcessA(NULL, "C:\\Users\\Saddie\\source\\repos\\lab11OS\\Debug\\server.exe ", NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, si, pi);
+			CreateProcessA(NULL, "server.exe ", NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, si, pi);
 			serverCreate = OpenEventA(EVENT_ALL_ACCESS, false, "$MyEventCreateServer$");
 			while(!serverCreate) serverCreate = OpenEventA(EVENT_ALL_ACCESS, false, "$MyEventCreateServer$");
 		}
@@ -224,11 +246,40 @@ namespace lab11OS {
 		 if (dwCode == WAIT_OBJECT_0) {
 			 hEventCreateClient = OpenEventA(EVENT_ALL_ACCESS, false, "$MyEventCreateUser$");
 			 hEventCreatedClient = OpenEventA(EVENT_ALL_ACCESS, false, "$MyEventCreated$");
+			 hEventTermination = OpenEventA(EVENT_ALL_ACCESS, false, "$MyEventTerminated$");
 			 hCreateMail = CreateFileA("\\\\.\\mailslot\\$createmail$", GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-		 }
-		 else {
-			 int a = 0;
+			 
 		 }
 	}
-	};
+	private: bool errorName;
+	private: System::Void textBoxName_Validating(System::Object^ sender, System::ComponentModel::CancelEventArgs^ e) {//перевірка на правильність імені
+		if (String::IsNullOrEmpty(textBoxName->Text) || String::IsNullOrWhiteSpace(textBoxName->Text)) {
+			errorProvider1->SetError(textBoxName, "Invalid name!");
+			errorName = true;
+		}
+		else {
+			errorProvider1->Clear();
+			errorName = false;
+		}
+		if (errorName) buttonAccept->Enabled = false;
+		else buttonAccept->Enabled = true;
+	}
+	private: System::Void textBoxName_Validated(System::Object^ sender, System::EventArgs^ e) {
+	if (String::IsNullOrEmpty(textBoxName->Text) || String::IsNullOrWhiteSpace(textBoxName->Text)) {
+			errorProvider1->SetError(textBoxName, "Invalid name!");
+			errorName = true;
+	}
+	else {
+		errorProvider1->Clear();
+		errorName = false;
+	}
+	if (errorName) buttonAccept->Enabled = false;
+	else buttonAccept->Enabled = true;
+	}
+	private: System::Void textBoxName_TextChanged(System::Object^ sender, System::EventArgs^ e) {
+		errorName = false;
+		errorProvider1->Clear();
+		buttonAccept->Enabled = true;
+	}
+};
 }

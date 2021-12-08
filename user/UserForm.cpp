@@ -15,8 +15,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	string tempName(temp);
 	temp = strtok(NULL, " ");
 	string temps(temp);
-	int id = atoi(temps.c_str());
-
+	int id = atoi(temps.c_str()); //зчитування аргументів командного рядка
 	Application::EnableVisualStyles();
 	Application::SetCompatibleTextRenderingDefault(false);
 	Application::Run(gcnew UserForm(tempName, id));

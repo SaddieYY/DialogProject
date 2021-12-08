@@ -6,6 +6,7 @@
 #include <fstream>
 #include <thread>
 #include "user.h"
+#define PUTH_F "C:\\Users\\Saddie\\source\\repos\\lab11OS\\files\\"
 
 namespace user {
 	using msclr::auto_gcroot;
@@ -38,6 +39,7 @@ namespace user {
 			InitializeComponent();
 			pUser = new cUser(id);
 			Text = gcnew String(name.c_str());
+			errorMes = false;
 			//
 			//TODO: Add the constructor code here
 			//
@@ -99,6 +101,7 @@ namespace user {
 			this->label1->TabIndex = 1;
 			this->label1->Text = L"Dialog:";
 			this->label1->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
+			this->textBox->Cursor = System::Windows::Forms::Cursors::Arrow;
 			this->textBox->Dock = System::Windows::Forms::DockStyle::Fill;
 			this->textBox->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 12, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
 				static_cast<System::Byte>(204)));
@@ -106,8 +109,11 @@ namespace user {
 			this->textBox->Multiline = true;
 			this->textBox->Name = L"textBox";
 			this->textBox->ReadOnly = true;
+			this->textBox->ScrollBars = System::Windows::Forms::ScrollBars::Vertical;
+			this->textBox->ShortcutsEnabled = false;
 			this->textBox->Size = System::Drawing::Size(815, 299);
 			this->textBox->TabIndex = 2;
+			this->textBox->WordWrap = false;
 			this->tableLayoutPanel1->ColumnCount = 1;
 			this->tableLayoutPanel1->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle(System::Windows::Forms::SizeType::Percent,
 				50)));
@@ -124,7 +130,6 @@ namespace user {
 			this->tableLayoutPanel1->RowStyles->Add((gcnew System::Windows::Forms::RowStyle(System::Windows::Forms::SizeType::Absolute, 8)));
 			this->tableLayoutPanel1->Size = System::Drawing::Size(821, 398);
 			this->tableLayoutPanel1->TabIndex = 3;
-			this->tableLayoutPanel1->Paint += gcnew System::Windows::Forms::PaintEventHandler(this, &UserForm::tableLayoutPanel1_Paint);
 			this->tableLayoutPanel2->ColumnCount = 2;
 			this->tableLayoutPanel2->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle(System::Windows::Forms::SizeType::Percent,
 				87.03704)));
@@ -143,9 +148,13 @@ namespace user {
 			this->textBoxMes->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 11.25, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
 				static_cast<System::Byte>(204)));
 			this->textBoxMes->Location = System::Drawing::Point(3, 4);
+			this->textBoxMes->MaxLength = 95;
 			this->textBoxMes->Name = L"textBoxMes";
 			this->textBoxMes->Size = System::Drawing::Size(703, 24);
 			this->textBoxMes->TabIndex = 0;
+			this->textBoxMes->TextChanged += gcnew System::EventHandler(this, &UserForm::textBoxMes_TextChanged);
+			this->textBoxMes->Validating += gcnew System::ComponentModel::CancelEventHandler(this, &UserForm::textBoxMes_Validating);
+			this->textBoxMes->Validated += gcnew System::EventHandler(this, &UserForm::textBoxMes_Validated);
 			this->button1->Dock = System::Windows::Forms::DockStyle::Fill;
 			this->button1->Location = System::Drawing::Point(712, 3);
 			this->button1->Name = L"button1";
@@ -174,14 +183,24 @@ namespace user {
 		}
 #pragma endregion
 	private: HANDLE hEventReload;
-	public: void Reload() {
+	public: void Reload() { //метод оновлення діалогу
 		hEventReload = OpenEventA(EVENT_ALL_ACCESS, false, "$MyEventReload$");
+		textBox->Text = "";
+		string fileName = (string)(PUTH_F)+"DialogFile";
+		fstream in(fileName);
+		string curName;
+		char curStr[100];
+		while (!in.eof())
+		{
+			in.getline(curStr, 100, '\n');
+			string temp(curStr);
+			textBox->Text = textBox->Text + gcnew System::String(temp.c_str()) + "\r\n";
+		}
+		in.close();
 		while (1) {
-			
 			DWORD dwCode = WaitForSingleObject(hEventReload, INFINITE);
 			if (dwCode == WAIT_OBJECT_0) {
 				textBox->Text = "";
-				string fileName = "C:\\Users\\Saddie\\source\\repos\\lab11OS\\files\\DialogFile";
 				std::fstream in(fileName);
 				std::string curName;
 				char curStr[100];
@@ -209,9 +228,8 @@ namespace user {
 	private: System::Void button1_Click(System::Object^ sender, System::EventArgs^ e) {
 
 	}
-	private: System::Void tableLayoutPanel1_Paint(System::Object^ sender, System::Windows::Forms::PaintEventArgs^ e) {
-	}
-	private: System::Void button1_Click_1(System::Object^ sender, System::EventArgs^ e) {
+	private: System::Void button1_Click_1(System::Object^ sender, System::EventArgs^ e) {//метод надіслання повідомлення
+		if (errorMes) return;
 		string temp = msclr::interop::marshal_as<std::string>(Text + ": " +textBoxMes->Text);
 		int a = pUser->Send(temp);
 		if (a == 1) {
@@ -219,17 +237,25 @@ namespace user {
 		}
 		textBoxMes->Text = "";
 	}
-	/*class cHelper {
-	public: auto_gcroot<UserForm^> pUser;
-	};*/
-
-    /*DWORD WINAPI ReloadT(LPVOID pThreadParam)
-	{
-		cHelper* a = (cHelper*)(pThreadParam);
-		a->pUser->Reload();
-	}*/
+	private: bool errorMes;
 	
-	};
+	private: System::Void textBoxMes_Validating(System::Object^ sender, System::ComponentModel::CancelEventArgs^ e) { //перевірка на правильність повідослення
+		if (String::IsNullOrEmpty(textBoxMes->Text) || String::IsNullOrWhiteSpace(textBoxMes->Text)) errorMes = true;
+		else errorMes = false;
+		if (errorMes) button1->Enabled = false;
+		else button1->Enabled = true;
+	}
+private: System::Void textBoxMes_TextChanged(System::Object^ sender, System::EventArgs^ e) {
+	errorMes = false;
+	button1->Enabled = true;
+}
+private: System::Void textBoxMes_Validated(System::Object^ sender, System::EventArgs^ e) {
+	if (String::IsNullOrEmpty(textBoxMes->Text) || String::IsNullOrWhiteSpace(textBoxMes->Text)) errorMes = true;
+	else errorMes = false;
+	if (errorMes) button1->Enabled = false;
+	else button1->Enabled = true;
+}
+};
 	void cHelper::Reload() {
 		this->pUser->Reload();
 	}

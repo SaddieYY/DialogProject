@@ -5,12 +5,12 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-
+#define PUTH_F "C:\\Users\\Saddie\\source\\repos\\lab11OS\\files\\"
 using namespace std;
 
-void writeFile(string mes){
-	string filename = "C:\\Users\\Saddie\\source\\repos\\lab11OS\\files\\DialogFile";
-	ofstream out(filename, std::ofstream::ate | std::ofstream::app); // окрываем файл для записи
+void writeFile(string mes){ //функція для запису повідомлення
+	string filename = (string)PUTH_F + "DialogFile";
+	ofstream out(filename, std::ofstream::ate | std::ofstream::app); 
 	out.write((mes + '\n').data(), mes.size() + 1);
 	out.close();
 	return;
@@ -38,14 +38,15 @@ private:
 
 int main(void)
 {
-	string fileName = "C:\\Users\\Saddie\\source\\repos\\lab11OS\\files\\DialogFile";
+	string fileName = (string)PUTH_F + "DialogFile";
 	ofstream in(fileName);
 	in.close();
-	HANDLE hEventServer; //чи сервер існує
-	HANDLE hEventReload; //для оновлення чату
-	HANDLE hEventCreateClient; // чи створити клієнт створений
-	HANDLE hEventCreatedClient; //коли створений
+	HANDLE hEventServer;
+	HANDLE hEventReload; 
+	HANDLE hEventCreateClient; 
+	HANDLE hEventCreatedClient; 
 	HANDLE hCreateMail;
+	HANDLE hEventTerminateA;
 	STARTUPINFOA* si = nullptr;
 	PROCESS_INFORMATION* pi = nullptr;
 	list<cUserServer> list;
@@ -65,12 +66,15 @@ int main(void)
 	if (!hEventReload) {
 		return GetLastError();
 	}
+	hEventTerminateA = CreateEventA(NULL, true, false, "$MyEventTerminated$");
+	const HANDLE h[2]{ hEventCreateClient,hEventTerminateA };
 	hCreateMail = CreateMailslotA("\\\\.\\mailslot\\$createmail$", 100, MAILSLOT_WAIT_FOREVER, NULL);
-	WaitForSingleObject(hEventCreateClient, INFINITE);
+	DWORD dwCode = WaitForMultipleObjects(2, h, false, INFINITE);
+	if(dwCode == WAIT_OBJECT_0)
 	while(true)
 	{
-		DWORD c = WaitForSingleObject(hEventCreateClient, 5);
-		if (c == WAIT_OBJECT_0) {
+		DWORD dwCode = WaitForSingleObject(hEventCreateClient, 5);
+		if (dwCode == WAIT_OBJECT_0) {
 			ResetEvent(hEventCreateClient);
 			string mail = "\\\\.\\mailslot\\$mail" + to_string(id) + "$", term = "$UserTerm" + to_string(id) + "$", send = "$UserSend" + to_string(id) + "$", reload = "$UserReload" + to_string(id) + "$";
 			cUserServer* a = new cUserServer(mail.c_str(), term.c_str(), send.c_str(), reload.c_str());
@@ -78,7 +82,6 @@ int main(void)
 			string temp = to_string(id);
 			char buf[100];
 			DWORD tempD;
-			//SetFilePointer(hMail, NULL, NULL, FILE_BEGIN);
 			bool bB = ReadFile(hCreateMail, buf, 100, &tempD, NULL);
 			string mes(buf);
 			mes += " ";
@@ -131,7 +134,7 @@ int main(void)
 			}
 		}
 	}
-
+	CloseHandle(hEventTerminateA);
 	CloseHandle(hEventServer);
 	CloseHandle(hEventCreateClient);
 	CloseHandle(hEventCreatedClient);
