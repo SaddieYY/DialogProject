@@ -99,13 +99,13 @@ int main(void)
 			ZeroMemory(si, sizeof(si));
 			si->cb = sizeof(si);
 			ZeroMemory(pi, sizeof(pi));
-			CreateProcessA(NULL, b, NULL, NULL, false, CREATE_NO_WINDOW, NULL, NULL, si, pi);
+			CreateProcessA(NULL, b, NULL, NULL, false, CREATE_NO_WINDOW, NULL, NULL, si, pi); //створення модера
 			pi = new PROCESS_INFORMATION();
 			si = new STARTUPINFOA();
 			ZeroMemory(si, sizeof(si));
 			si->cb = sizeof(si);
 			ZeroMemory(pi, sizeof(pi));
-			bool tempb = CreateProcessA(NULL, c, NULL, NULL, false, CREATE_NEW_CONSOLE, NULL, NULL, si, pi);
+			bool tempb = CreateProcessA(NULL, c, NULL, NULL, false, CREATE_NEW_CONSOLE, NULL, NULL, si, pi); //створення модера
 			SetEvent(hEventCreatedClient);
 			cout << "Item " << id << endl;
 			++id;

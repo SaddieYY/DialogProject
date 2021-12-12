@@ -218,11 +218,11 @@ namespace lab11OS {
 		if (!findUser(temp)) {
 			writeUser(temp);
 		}
-		else {
+		/*else{
 			System::Windows::Forms::MessageBox::Show("Name is already used!", "Warning!", System::Windows::Forms::MessageBoxButtons::OK);
 			textBoxName->Text = "";
 			return;
-		}
+		}*/
 		AuthorizationForm_Load(sender, e);
 		const char* buf = temp.c_str();
 		WriteFile(hCreateMail, buf, strlen(buf) + 1, NULL, NULL);

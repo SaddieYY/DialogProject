@@ -4,8 +4,6 @@
 #include "moderator.h"
 using namespace std;
 
-
-
 int main(int argc, char* argv[])
 {
 	int id = atoi(argv[1]);

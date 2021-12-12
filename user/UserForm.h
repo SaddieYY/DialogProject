@@ -99,7 +99,7 @@ namespace user {
 			this->label1->Name = L"label1";
 			this->label1->Size = System::Drawing::Size(815, 46);
 			this->label1->TabIndex = 1;
-			this->label1->Text = L"Dialog:";
+			this->label1->Text = L"Dialog";
 			this->label1->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
 			this->textBox->Cursor = System::Windows::Forms::Cursors::Arrow;
 			this->textBox->Dock = System::Windows::Forms::DockStyle::Fill;
@@ -224,18 +224,20 @@ namespace user {
 		pHelper->pUser = this;
 		DWORD id;
 		hReload = CreateThread(NULL, 0, ReloadT, pHelper, 0, &id);
+		errorMes = true;
 	}
 	private: System::Void button1_Click(System::Object^ sender, System::EventArgs^ e) {
 
 	}
 	private: System::Void button1_Click_1(System::Object^ sender, System::EventArgs^ e) {//метод надіслання повідомлення
 		if (errorMes) return;
-		string temp = msclr::interop::marshal_as<std::string>(Text + ": " +textBoxMes->Text);
+		string temp = msclr::interop::marshal_as<std::string>(Text + ": " + textBoxMes->Text);
 		int a = pUser->Send(temp);
 		if (a == 1) {
 			System::Windows::Forms::MessageBox::Show("Too many forbidden words!\nMessage not sent.", "Error!", System::Windows::Forms::MessageBoxButtons::OK);
 		}
 		textBoxMes->Text = "";
+		errorMes = true;
 	}
 	private: bool errorMes;
 	
